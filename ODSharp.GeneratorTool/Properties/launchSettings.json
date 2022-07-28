@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ODSharp.GeneratorTool": {
+      "commandName": "Project",
+      "commandLineArgs": "--manifest $(SolutionDir)\\ODSharpTool\\ODriveManifest.json\r\n--outFile $(SolutionDir)\\ODSharpTool\\ODriveManifest.g.cs\r\n--enums $(SolutionDir)\\ODSharpTool\\Enums.json"
+    }
+  }
+}

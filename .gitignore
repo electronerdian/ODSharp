@@ -1,0 +1,6 @@
+# 'tevs
+.vs/
+obj/
+bin/
+
+*.user
