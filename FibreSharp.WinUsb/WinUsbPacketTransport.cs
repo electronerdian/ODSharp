@@ -17,12 +17,17 @@ public class WinUsbPacketTransport : IPacketTransport
         _usbInterfaceOutPipe = outPipe;
     }
 
-    public Task<int> ReceivePacketAsync(byte[] buffer, int offset, int count)
+    public async Task<int> ReceivePacketAsync(byte[] buffer, int offset, int count)
     {
-        return Task.Factory.FromAsync(_inPipe.BeginRead, _inPipe.EndRead, buffer, offset, count, null);
+        //Console.WriteLine("Rec");
+        var result = await Task.Factory.FromAsync(_inPipe.BeginRead, _inPipe.EndRead, buffer, offset, count, null);
+        //Console.WriteLine($"Rec {Convert.ToHexString(buffer[offset..(offset + result)])}");
+        return result;
     }
-    public Task SendPacketAsync(byte[] buffer, int offset, int count)
+    public async Task SendPacketAsync(byte[] buffer, int offset, int count)
     {
-        return Task.Factory.FromAsync(_usbInterfaceOutPipe.BeginWrite, _usbInterfaceOutPipe.EndWrite, buffer, offset, count, null);
+        //Console.WriteLine($"{GetHashCode()} Send {Convert.ToHexString(buffer[offset..(offset + count)])}");
+        await Task.Factory.FromAsync(_usbInterfaceOutPipe.BeginWrite, _usbInterfaceOutPipe.EndWrite, buffer, offset, count, null);
+        //Console.WriteLine("Sent");
     }
 }

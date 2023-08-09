@@ -5,7 +5,7 @@ namespace FibreSharp;
 
 public class LegacyFibreClientFactory
 {
-    private static readonly Crc16Base Crc16 = new(
+    private static Crc16Base Crc16() => new(
         polynomial: 0x3d65,
         initialValue: 0x0001,
         finalXorValue: 0,
@@ -16,7 +16,7 @@ public class LegacyFibreClientFactory
     {
         var manifestBytes = await GetManifestJsonBytes(lowLevel);
         var root = LegacyFibreManifestParser.Parse(manifestBytes);
-        var manifestCrc = BitConverter.ToUInt16(Crc16.ComputeHash(manifestBytes));
+        var manifestCrc = BitConverter.ToUInt16(Crc16().ComputeHash(manifestBytes));
         return new LegacyFibreClient(
             lowLevel,
             new FibreManifest(

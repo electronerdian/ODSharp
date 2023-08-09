@@ -1,21 +1,24 @@
 ﻿using System.Buffers;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace FibreSharp;
 
 public class LegacyFibreChannel : ILegacyFibreChannel
 {
+    private object _lock = new object();
+    private bool closed = false;
     private const int BufferSize = 256;
     private readonly ArrayPool<byte> _arrayPool = ArrayPool<byte>.Shared;
     private readonly IPacketTransport _packetTransport;
-    private readonly ConcurrentDictionary<ushort, IReceiver> _pendingMessages = new();
+    private ConcurrentDictionary<ushort, IReceiver> _pendingMessages = new();
     private readonly SequenceCounter _sequenceCounter = new();
 
     public LegacyFibreChannel(IPacketTransport packetTransport)
     {
         _packetTransport = packetTransport;
     }
-    
+
     private async ValueTask SendPacketAsync<TArg>(
         ushort sequenceNumber,
         ushort endpointId,
@@ -29,7 +32,7 @@ public class LegacyFibreChannel : ILegacyFibreChannel
         ArgChecker.Range(sequenceNumber, 0, 0x7FFF);
         ArgChecker.Range(endpointId, 0, 0x7FFF);
 
-        //Console.WriteLine($"Sending {sequenceNumber} to {endpointId}");
+        //Console.WriteLine($"Sending {sequenceNumber:x} to {endpointId:x}");
 
         var packetLength = payloadLength + 8;
 
@@ -39,7 +42,7 @@ public class LegacyFibreChannel : ILegacyFibreChannel
         BitConverter.TryWriteBytes(buffer.AsSpan(4), responseLength);
         payloadAction(buffer.AsSpan(6, payloadLength), payloadArg);
         BitConverter.TryWriteBytes(buffer.AsSpan(6 + payloadLength), crc);
-
+        //Debug.Print(Convert.ToHexString(buffer[..packetLength]));
         await _packetTransport.SendPacketAsync(buffer, 0, packetLength);
 
         //Console.WriteLine($"Sent {sequenceNumber}");
@@ -156,6 +159,7 @@ public class LegacyFibreChannel : ILegacyFibreChannel
     private interface IReceiver
     {
         void Receive(ReadOnlySpan<byte> payload);
+        void Fault(Exception exception);
     }
 
     private class Receiver<T> : IReceiver
@@ -174,13 +178,18 @@ public class LegacyFibreChannel : ILegacyFibreChannel
         {
             _tcs.SetResult(_convertFunc(payload));
         }
+
+        public void Fault(Exception exception)
+        {
+            _tcs.SetException(exception);
+        }
     }
 
     private class Receiver : IReceiver
     {
         private readonly TaskCompletionSource _tcs;
         public Task Task => _tcs.Task;
-        
+
         public Receiver()
         {
             _tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -190,58 +199,107 @@ public class LegacyFibreChannel : ILegacyFibreChannel
         {
             _tcs.SetResult();
         }
+
+        public void Fault(Exception exception)
+        {
+            _tcs.SetException(exception);
+        }
     }
 
     private Task WaitForResponseAsync(ushort sequenceNumber)
     {
-        //Console.WriteLine($"Adding waiter for {sequenceNumber}");
-        var receiver = new Receiver();
-        if (!_pendingMessages.TryAdd(sequenceNumber, receiver))
+        lock (_lock)
         {
-            throw new InvalidOperationException(
-                $"Could not add receiver for seq {sequenceNumber} because there is already a receiver for that seq");
+            if (closed)
+            {
+                throw new FibreChannelException(new Exception("Closed"));
+            }
+
+            //Console.WriteLine($"Adding waiter for {sequenceNumber}");
+            var receiver = new Receiver();
+
+            if (!_pendingMessages.TryAdd(sequenceNumber, receiver))
+            {
+                throw new InvalidOperationException(
+                    $"Could not add receiver for seq {sequenceNumber} because there is already a receiver for that seq");
+            }
+            //Console.WriteLine($"Added waiter for {sequenceNumber}");
+            return receiver.Task;
         }
 
-        //Console.WriteLine($"Added waiter for {sequenceNumber}");
-        return receiver.Task;
     }
 
     private Task<T> WaitForResponseAsync<T>(ushort sequenceNumber, ByteSpanConvertFunc<T> responseConvertFunc)
     {
-        //Console.WriteLine($"Adding waiter<{typeof(T).Name}> for {sequenceNumber}");
-        var receiver = new Receiver<T>(responseConvertFunc);
-        if (!_pendingMessages.TryAdd(sequenceNumber, receiver))
+        lock (_lock)
         {
-            throw new InvalidOperationException(
-                $"Could not add receiver for seq {sequenceNumber} because there is already a receiver for that seq");
-        }
+            if (closed)
+            {
+                throw new FibreChannelException(new Exception("Closed"));
+            }
 
-        //Console.WriteLine($"Added waiter for {sequenceNumber}");
-        return receiver.Task;
+            //Console.WriteLine($"Adding waiter<{typeof(T).Name}> for {sequenceNumber}");
+            var receiver = new Receiver<T>(responseConvertFunc);
+            if (!_pendingMessages.TryAdd(sequenceNumber, receiver))
+            {
+                throw new InvalidOperationException(
+                    $"Could not add receiver for seq {sequenceNumber} because there is already a receiver for that seq");
+            }
+
+            //Console.WriteLine($"Added waiter for {sequenceNumber}");
+            return receiver.Task;
+        }
     }
 
     public void Start()
     {
-        _ = Task.Run(RecieveLoop);
+        _ = Task.Run(ReceiveLoop);
     }
 
-    private async Task RecieveLoop()
+    private async Task ReceiveLoop()
     {
+        //Console.WriteLine($"In {nameof(ReceiveLoop)}");
         while (true)
         {
-            //Console.WriteLine("Waiting to receive");
             var buffer = _arrayPool.Rent(BufferSize);
             try
             {
-                var len = await _packetTransport.ReceivePacketAsync(buffer, 0, buffer.Length);
-                var sequenceNumber = (ushort)(BitConverter.ToUInt16(buffer.AsSpan(0, 2)) & 0x7FFF);
+                //Console.WriteLine("Waiting to receive");
+                int len;
+                try
+                {
+                    len = await _packetTransport.ReceivePacketAsync(buffer, 0, buffer.Length);
+                }
+                catch (Exception ex)
+                {
+                    lock (_lock)
+                    {
+                        closed = true;
+                        foreach (var (_, receiver) in _pendingMessages)
+                        {
+                            receiver.Fault(new FibreChannelException(ex));
+                        }
+                    }
+
+                    return;
+                }
 
                 //Console.WriteLine("Receiving");
 
-                if (_pendingMessages.TryRemove(sequenceNumber, out var waiter))
+                var sequenceNumber = (ushort)(BitConverter.ToUInt16(buffer.AsSpan(0, 2)) & 0x7FFF);
+
+
+                bool waiterExists;
+                IReceiver? waiter;
+                lock (_lock)
+                {
+                    waiterExists = _pendingMessages.TryRemove(sequenceNumber, out waiter);
+                }
+
+                if (waiterExists)
                 {
                     //Console.WriteLine($"Waking waiter");
-                    waiter.Receive(buffer.AsSpan(2, len - 2));
+                    waiter!.Receive(buffer.AsSpan(2, len - 2));
                     //Console.WriteLine("Returned from waiter");
                 }
                 else
@@ -250,9 +308,15 @@ public class LegacyFibreChannel : ILegacyFibreChannel
                 }
             }
             finally
+
             {
                 _arrayPool.Return(buffer);
             }
         }
     }
+}
+
+public class FibreChannelException : Exception
+{
+    public FibreChannelException(Exception innerException) : base("Channel closed", innerException) { }
 }
