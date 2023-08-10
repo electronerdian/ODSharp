@@ -3,7 +3,10 @@ using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using System.Text.Json;
 using FibreSharp.LegacyManifestParser;
+using FibreSharp.YamlManifestParser;
 using ODSharp.GeneratorCore;
+
+var m = new YamlFibreManifestParser().Parse(File.OpenText(@"c:\Users\elect\Downloads\odrive-interface.yaml"));
 
 var manifestFileOption = new Option<FileInfo>("--manifest")
     .ExistingOnly();

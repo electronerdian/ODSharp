@@ -4,9 +4,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.2.32519.379
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FibreSharp", "FibreSharp\FibreSharp.csproj", "{AA2B6947-B9C2-478C-B42C-8557F7222766}"
-	ProjectSection(ProjectDependencies) = postProject
-		{C45119AA-4984-448A-8AF8-347616B5C6B8} = {C45119AA-4984-448A-8AF8-347616B5C6B8}
-	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ODSharpTests", "ODSharpTests\ODSharpTests.csproj", "{DE98A4A2-4838-4F2D-8BA1-CCD12FD4E9B4}"
 EndProject
@@ -18,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ODSharp.Generator", "ODShar
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FibreSharp.LegacyManifestParser", "FibreSharp.LegacyManifestParser\FibreSharp.LegacyManifestParser.csproj", "{10F09318-26F0-4D96-8176-6F33AFCA4F45}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FibreSharp.YamlManifestParser", "FibreSharp.YamlManifestParser\FibreSharp.YamlManifestParser.csproj", "{8AA5C76D-1D46-4A93-B790-C55314C7191F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,10 +27,6 @@ Global
 		{AA2B6947-B9C2-478C-B42C-8557F7222766}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AA2B6947-B9C2-478C-B42C-8557F7222766}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AA2B6947-B9C2-478C-B42C-8557F7222766}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C45119AA-4984-448A-8AF8-347616B5C6B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C45119AA-4984-448A-8AF8-347616B5C6B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C45119AA-4984-448A-8AF8-347616B5C6B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C45119AA-4984-448A-8AF8-347616B5C6B8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DE98A4A2-4838-4F2D-8BA1-CCD12FD4E9B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DE98A4A2-4838-4F2D-8BA1-CCD12FD4E9B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE98A4A2-4838-4F2D-8BA1-CCD12FD4E9B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -52,14 +47,10 @@ Global
 		{10F09318-26F0-4D96-8176-6F33AFCA4F45}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{10F09318-26F0-4D96-8176-6F33AFCA4F45}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{10F09318-26F0-4D96-8176-6F33AFCA4F45}.Release|Any CPU.Build.0 = Release|Any CPU
-		{715A30E0-5249-4D27-93C9-F86BB0219AB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{715A30E0-5249-4D27-93C9-F86BB0219AB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{715A30E0-5249-4D27-93C9-F86BB0219AB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{715A30E0-5249-4D27-93C9-F86BB0219AB6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{44008145-4A85-4282-9775-01151FBAF3B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{44008145-4A85-4282-9775-01151FBAF3B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{44008145-4A85-4282-9775-01151FBAF3B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{44008145-4A85-4282-9775-01151FBAF3B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8AA5C76D-1D46-4A93-B790-C55314C7191F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8AA5C76D-1D46-4A93-B790-C55314C7191F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8AA5C76D-1D46-4A93-B790-C55314C7191F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8AA5C76D-1D46-4A93-B790-C55314C7191F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

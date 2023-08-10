@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FibreSharp.LegacyManifestParser\FibreSharp.LegacyManifestParser.csproj" />
+    <ProjectReference Include="..\FibreSharp.YamlManifestParser\FibreSharp.YamlManifestParser.csproj" />
   </ItemGroup>
 
 </Project>
