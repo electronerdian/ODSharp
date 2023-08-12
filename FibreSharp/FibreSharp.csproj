@@ -9,7 +9,7 @@
 
   <ItemGroup>
 	  <PackageReference Include="CrcDotNET" Version="1.0.3" />
-	  <PackageReference Include="JetBrains.Annotations" Version="2022.1.0" />
+	  <PackageReference Include="JetBrains.Annotations" Version="2023.2.0" />
   </ItemGroup>
 
   <ItemGroup>

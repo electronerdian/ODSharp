@@ -17,9 +17,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FibreSharp.LegacyManifestPa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FibreSharp.YamlManifestParser", "FibreSharp.YamlManifestParser\FibreSharp.YamlManifestParser.csproj", "{8AA5C76D-1D46-4A93-B790-C55314C7191F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarApp", "CarApp\CarApp.csproj", "{F1BD2BB8-E23E-448B-89C0-EA407776001B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FibreSharp.LibUsb", "FibreSharp.LibUsb\FibreSharp.LibUsb.csproj", "{F62BD316-824E-49D3-840C-1C46CDE0CC41}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FibreSharp.LibUsb", "FibreSharp.LibUsb\FibreSharp.LibUsb.csproj", "{F62BD316-824E-49D3-840C-1C46CDE0CC41}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ODSharp", "ODSharp\ODSharp.csproj", "{17A8FFA4-82AA-4E6E-B773-811B7B6F7D90}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,14 +55,14 @@ Global
 		{8AA5C76D-1D46-4A93-B790-C55314C7191F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8AA5C76D-1D46-4A93-B790-C55314C7191F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8AA5C76D-1D46-4A93-B790-C55314C7191F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F1BD2BB8-E23E-448B-89C0-EA407776001B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F1BD2BB8-E23E-448B-89C0-EA407776001B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F1BD2BB8-E23E-448B-89C0-EA407776001B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F1BD2BB8-E23E-448B-89C0-EA407776001B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F62BD316-824E-49D3-840C-1C46CDE0CC41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F62BD316-824E-49D3-840C-1C46CDE0CC41}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F62BD316-824E-49D3-840C-1C46CDE0CC41}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F62BD316-824E-49D3-840C-1C46CDE0CC41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17A8FFA4-82AA-4E6E-B773-811B7B6F7D90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17A8FFA4-82AA-4E6E-B773-811B7B6F7D90}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17A8FFA4-82AA-4E6E-B773-811B7B6F7D90}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17A8FFA4-82AA-4E6E-B773-811B7B6F7D90}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

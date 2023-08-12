@@ -8,11 +8,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="LibUsbDotNet" Version="2.2.29" />
+		<PackageReference Include="LibUsbDotNet" Version="3.0.102-alpha" />
 		<PackageReference Include="WinUSBNet" Version="2.1.0" Condition="$(TargetFramework) == 'net6.0-windows'" />
 		<ProjectReference Include="..\FibreSharp.LibUsb\FibreSharp.LibUsb.csproj" />
-		<ProjectReference Include="..\FibreSharp.WinUsb\FibreSharp.WinUsb.csproj" Condition="$(TargetFramework) == 'net6.0-windows'"  />
+		<ProjectReference Include="..\FibreSharp.WinUsb\FibreSharp.WinUsb.csproj" Condition="$(TargetFramework) == 'net6.0-windows'" />
 		<ProjectReference Include="..\FibreSharp\FibreSharp.csproj" />
+		<ProjectReference Include="..\ODSharp\ODSharp.csproj" />
 	</ItemGroup>
 
 </Project>

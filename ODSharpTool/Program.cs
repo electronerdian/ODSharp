@@ -6,8 +6,8 @@ using FibreSharp;
 using FibreSharp.LibUsb;
 using LibUsbDotNet;
 using LibUsbDotNet.LibUsb;
-using LibUsbDotNet.LudnMonoLibUsb;
 using LibUsbDotNet.Main;
+using ODSharp;
 using ODSharp.Generated;
 
 #if WINDOWS
@@ -19,13 +19,14 @@ using FibreSharp.WinUsb;
 enum Mode
 {
     Reconfigure,
-    Tune
+    Tune,
+    Run
 }
 static class Program
 {
     public static async Task Main(string[] args)
     {
-        var mode = Mode.Reconfigure;
+        var mode = Mode.Run;
 
 
         switch (mode)
@@ -37,49 +38,61 @@ static class Program
             case Mode.Tune:
                 await Tune();
                 break;
+
+            case Mode.Run:
+                await Run();
+                break;
         }
+    }
+
+    private static async Task Run()
+    {
+        var leftDrive = await Init();
+        var rightDrive = await Init();
+
+        
     }
 
     private static async Task Tune()
     {
-        var root = await Init();
-        await root.clear_errors.InvokeAsync();
-        root.axis0.config.enable_watchdog.Value = false;
-        root.axis0.requested_state.Value = (byte)AxisState.IDLE;
-        while (root.axis0.is_armed.Value)
+        var driveContext = await Init();
+        await driveContext.Root.clear_errors.InvokeAsync();
+        driveContext.Root.axis0.config.enable_watchdog.Value = false;
+        driveContext.Root.axis0.requested_state.Value = (byte)AxisState.IDLE;
+        while (driveContext.Root.axis0.is_armed.Value)
         {
             Console.WriteLine("Waiting for axis disarm");
         }
 
         Console.WriteLine("Disarmed");
-        await root.clear_errors.InvokeAsync();
+        await driveContext.Root.clear_errors.InvokeAsync();
 
-        if (root.HasErrors())
+        if (driveContext.Root.HasErrors())
         {
-            root.DumpErrors();
+            driveContext.Root.DumpErrors();
             return;
         }
 
 
         Console.WriteLine("Set gains to defaults");
-        root.axis0.controller.config.vel_gain.Value = 0.16f;
-        root.axis0.controller.config.pos_gain.Value = 20.0f;
-        root.axis0.controller.config.vel_integrator_gain.Value = 0.32f;
+        driveContext.Root.axis0.controller.config.vel_gain.Value = 0.16f;
+        driveContext.Root.axis0.controller.config.pos_gain.Value = 20.0f;
+        driveContext.Root.axis0.controller.config.vel_integrator_gain.Value = 0.32f;
 
         Console.WriteLine("Set up for position control");
-        root.axis0.controller.config.control_mode.Value = (byte)ControlMode.POSITION_CONTROL;
-        await root.axis0.set_abs_pos.InvokeAsync(0.0f);
-        root.axis0.controller.config.absolute_setpoints.Value = true;
-        root.axis0.controller.input_pos.Value = 0.0f;
+        driveContext.Root.axis0.controller.config.control_mode.Value = (byte)ControlMode.POSITION_CONTROL;
+        await driveContext.Root.axis0.set_abs_pos.InvokeAsync(0.0f);
+        driveContext.Root.axis0.controller.config.absolute_setpoints.Value = true;
+        driveContext.Root.axis0.controller.input_pos.Value = 0.0f;
 
         Console.WriteLine("Arming");
-        root.axis0.requested_state.Value = (byte)AxisState.CLOSED_LOOP_CONTROL;
-        while (root.axis0.current_state.Value != (byte)AxisState.CLOSED_LOOP_CONTROL)
+        driveContext.Root.axis0.requested_state.Value = (byte)AxisState.CLOSED_LOOP_CONTROL;
+        while (driveContext.Root.axis0.current_state.Value != (byte)AxisState.CLOSED_LOOP_CONTROL)
         {
             Console.WriteLine("Waiting for axis to arm");
-            if (root.HasErrors())
+            if (driveContext.Root.HasErrors())
             {
-                root.DumpErrors();
+                driveContext.Root.DumpErrors();
                 return;
             }
         }
@@ -87,7 +100,7 @@ static class Program
         Console.WriteLine("-----------------------------------------------");
 
         Console.WriteLine("Set vel_integrator_gain gain to 0");
-        root.axis0.controller.config.vel_integrator_gain.Value = 0.0f;
+        driveContext.Root.axis0.controller.config.vel_integrator_gain.Value = 0.0f;
 
         Console.WriteLine("Make sure you have a stable system.If it is not, decrease all gains until you have one.");
 
@@ -109,15 +122,15 @@ static class Program
 
         void Wiggle()
         {
-            MoveTo(root, 0.25f, positionTolerance);
+            MoveTo(driveContext.Root, 0.25f, positionTolerance);
 
-            MoveTo(root, 0.0f, positionTolerance);
-            MoveTo(root, 0.25f, positionTolerance);
+            MoveTo(driveContext.Root, 0.0f, positionTolerance);
+            MoveTo(driveContext.Root, 0.25f, positionTolerance);
 
-            MoveTo(root, 0.0f, positionTolerance);
-            MoveTo(root, 0.25f, positionTolerance);
+            MoveTo(driveContext.Root, 0.0f, positionTolerance);
+            MoveTo(driveContext.Root, 0.25f, positionTolerance);
 
-            MoveTo(root, 0.0f, positionTolerance);
+            MoveTo(driveContext.Root, 0.0f, positionTolerance);
         }
 
         Wiggle();
@@ -126,7 +139,7 @@ static class Program
 
         while (true)
         {
-            var curGain = root.axis0.controller.config.vel_gain.Value;
+            var curGain = driveContext.Root.axis0.controller.config.vel_gain.Value;
             var newGain = curGain * 1.3f;
             Console.WriteLine($"{curGain} => {newGain}");
 
@@ -141,12 +154,12 @@ static class Program
             }
             else if (line == "k")
             {
-                root.axis0.controller.config.vel_gain.Value = newGain;
+                driveContext.Root.axis0.controller.config.vel_gain.Value = newGain;
             }
         }
 
         Console.WriteLine("Back down vel_gain to 50 % of the vibrating value.");
-        root.axis0.controller.config.vel_gain.Value *= 0.5f;
+        driveContext.Root.axis0.controller.config.vel_gain.Value *= 0.5f;
 
         //Increase pos_gain by around 30 % per iteration until you see some overshoot.
 
@@ -164,14 +177,14 @@ static class Program
 
         while (true)
         {
-            if (root.HasErrors())
+            if (driveContext.Root.HasErrors())
             {
-                root.DumpErrors();
+                driveContext.Root.DumpErrors();
                 return;
             }
 
-            Console.WriteLine($"input_pos: {root.axis0.controller.input_pos.Value}");
-            Console.WriteLine($"Current pos: {root.axis0.pos_vel_mapper.pos_abs.Value} / {root.axis0.pos_vel_mapper.pos_rel.Value}");
+            Console.WriteLine($"input_pos: {driveContext.Root.axis0.controller.input_pos.Value}");
+            Console.WriteLine($"Current pos: {driveContext.Root.axis0.pos_vel_mapper.pos_abs.Value} / {driveContext.Root.axis0.pos_vel_mapper.pos_rel.Value}");
             Console.WriteLine();
 
             await Task.Delay(500);
@@ -180,92 +193,92 @@ static class Program
 
     private static async Task Reconfigure()
     {
-        var root = await Init();
-        DumpIDs(root);
-        await root.axis0.watchdog_feed.InvokeAsync();
-        if (root.HasErrors())
+        var driveContext = await Init();
+        DumpIDs(driveContext.Root);
+        await driveContext.Root.axis0.watchdog_feed.InvokeAsync();
+        if (driveContext.Root.HasErrors())
         {
             Console.WriteLine("Errors detected:");
-            root.DumpErrors();
+            driveContext.Root.DumpErrors();
 
             Console.WriteLine("Clearing");
-            await root.clear_errors.InvokeAsync();
+            await driveContext.Root.clear_errors.InvokeAsync();
             await Task.Delay(TimeSpan.FromSeconds(1));
 
-            if (root.HasErrors())
+            if (driveContext.Root.HasErrors())
             {
                 Console.WriteLine("Still have errors, exiting:");
-                root.DumpErrors();
+                driveContext.Root.DumpErrors();
                 return;
             }
         }
 
         Console.WriteLine("Erasing config");
-        root = await root.EraseConfiguration();
+        driveContext = await driveContext.EraseConfiguration();
 
         Console.WriteLine("Setting battery config");
         var batNCells = 6; // # number of cells in series
         var batCapacity = 6.000f; //# capacity of the battery in Ah
-        root.config.dc_bus_undervoltage_trip_level.Value = 3.3f * batNCells;
-        root.config.dc_bus_overvoltage_trip_level.Value = 4.25f * batNCells;
-        root.config.dc_max_positive_current.Value = batCapacity * 10;
-        root.config.dc_max_negative_current.Value = -batCapacity * 1;
+        driveContext.Root.config.dc_bus_undervoltage_trip_level.Value = 3.3f * batNCells;
+        driveContext.Root.config.dc_bus_overvoltage_trip_level.Value = 4.25f * batNCells;
+        driveContext.Root.config.dc_max_positive_current.Value = batCapacity * 10;
+        driveContext.Root.config.dc_max_negative_current.Value = -batCapacity * 1;
 
         Console.WriteLine("Setting motor config");
-        root.axis0.config.motor.motor_type.Value = (byte)MotorType.HIGH_CURRENT;
-        root.axis0.config.motor.pole_pairs.Value = 7;
-        root.axis0.config.motor.torque_constant.Value = 8.27f / 270;
+        driveContext.Root.axis0.config.motor.motor_type.Value = (byte)MotorType.HIGH_CURRENT;
+        driveContext.Root.axis0.config.motor.pole_pairs.Value = 7;
+        driveContext.Root.axis0.config.motor.torque_constant.Value = 8.27f / 270;
 
         Console.WriteLine("Setting encoder config");
-        root.amt21_encoder_group0.config.enable.Value = true;
-        root.axis0.config.load_encoder.Value = (byte)EncoderId.AMT21_ENCODER0;
-        root.axis0.config.commutation_encoder.Value = (byte)EncoderId.AMT21_ENCODER0;
+        driveContext.Root.amt21_encoder_group0.config.enable.Value = true;
+        driveContext.Root.axis0.config.load_encoder.Value = (byte)EncoderId.AMT21_ENCODER0;
+        driveContext.Root.axis0.config.commutation_encoder.Value = (byte)EncoderId.AMT21_ENCODER0;
 
         Console.WriteLine("Setting UART config");
-        root.config.enable_uart_a.Value = true;
-        root.config.gpio12_mode.Value = (byte)GpioMode.UART_A;
-        root.config.gpio13_mode.Value = (byte)GpioMode.UART_A;
-        root.config.uart0_protocol.Value = (byte)StreamProtocolType.ASCII;
+        driveContext.Root.config.enable_uart_a.Value = true;
+        driveContext.Root.config.gpio12_mode.Value = (byte)GpioMode.UART_A;
+        driveContext.Root.config.gpio13_mode.Value = (byte)GpioMode.UART_A;
+        driveContext.Root.config.uart0_protocol.Value = (byte)StreamProtocolType.ASCII;
 
         Console.WriteLine("Setting watchdog config");
-        root.axis0.config.watchdog_timeout.Value = 5.0f;
-        root.axis0.config.enable_watchdog.Value = false;
+        driveContext.Root.axis0.config.watchdog_timeout.Value = 5.0f;
+        driveContext.Root.axis0.config.enable_watchdog.Value = false;
 
         Console.WriteLine("Setting misc config");
-        root.axis0.config.motor.calibration_current.Value = 20.0f;
-        root.axis0.config.motor.current_soft_max.Value = 50.0f;
-        root.axis0.config.motor.current_hard_max.Value = 60.0f;
+        driveContext.Root.axis0.config.motor.calibration_current.Value = 20.0f;
+        driveContext.Root.axis0.config.motor.current_soft_max.Value = 50.0f;
+        driveContext.Root.axis0.config.motor.current_hard_max.Value = 60.0f;
 
-        root = await root.SaveConfiguration();
+        driveContext = await driveContext.SaveConfiguration();
 
         Console.WriteLine("Waiting for initialization");
-        while ((((ODriveError)root.axis0.active_errors.Value) & ODriveError.INITIALIZING) != 0)
+        while ((((ODriveError)driveContext.Root.axis0.active_errors.Value) & ODriveError.INITIALIZING) != 0)
         {
             Console.WriteLine("ODrive is still initializing");
             await Task.Delay(TimeSpan.FromSeconds(1));
         }
 
         Console.WriteLine("Calibrating");
-        root.axis0.requested_state.Value = (byte)AxisState.FULL_CALIBRATION_SEQUENCE;
+        driveContext.Root.axis0.requested_state.Value = (byte)AxisState.FULL_CALIBRATION_SEQUENCE;
         await Task.Delay(TimeSpan.FromSeconds(0.5));
-        while (root.axis0.current_state.Value != (byte)AxisState.IDLE)
+        while (driveContext.Root.axis0.current_state.Value != (byte)AxisState.IDLE)
         {
             Console.WriteLine("Waiting for idle");
             await Task.Delay(TimeSpan.FromSeconds(1));
         }
 
-        if (root.HasErrors())
+        if (driveContext.Root.HasErrors())
         {
             Console.WriteLine("Errors detected:");
-            root.DumpErrors();
+            driveContext.Root.DumpErrors();
             return;
         }
 
         Console.WriteLine("Enabling watchdog");
-        root.axis0.config.enable_watchdog.Value = true;
+        driveContext.Root.axis0.config.enable_watchdog.Value = true;
 
         Console.WriteLine("Saving config");
-        root = await root.SaveConfiguration();
+        driveContext = await driveContext.SaveConfiguration();
 
         Console.WriteLine();
     }
@@ -295,55 +308,71 @@ static class Program
             ; //|| root.axis0.last_drv_fault.Value != 0;
     }
 
-    private static async Task<C_> EraseConfiguration(this C_ c1)
+    private static async Task<DriveContext> EraseConfiguration(this DriveContext context)
     {
-        return await c1.ExpectReboot(async () => await c1.erase_configuration.InvokeAsync());
+        return await context.ExpectReboot(async () => await context.Root.erase_configuration.InvokeAsync());
     }
-    private static async Task<C_> SaveConfiguration(this C_ c1)
+    private static async Task<DriveContext> SaveConfiguration(this DriveContext context)
     {
-        return await c1.ExpectReboot(async () => await c1.save_configuration.InvokeAsync());
+        return await context.ExpectReboot(async () => await context.Root.save_configuration.InvokeAsync());
     }
 
-    private static async Task<C_> ExpectReboot(this C_ root, Func<Task> func)
+    private static async Task<DriveContext> ExpectReboot(this DriveContext context, Func<Task> func)
     {
         try
         {
             await func();
-            return root;
         }
         catch (FibreChannelException ex)
         {
-            Debug.Print($"Expected channel close exception: {ex}");
-            await Task.Delay(TimeSpan.FromMilliseconds(1000));
-            return await Init();
+            Debug.Print($"Expected exception after channel close: {ex}");
         }
+
+        await Task.Delay(TimeSpan.FromMilliseconds(1000));
+        context.Dispose();
+
+        return await Init();
     }
 
-    private static async Task<C_> Init()
+        static readonly IUsbContext UsbContext = new UsbContext();
+
+        private static async Task<DriveContext> Init()
     {
 #if WINDOWS
-        USBDevice? singleDevice = null;
-        while (singleDevice == null)
+        USBDevice? usbDevice = null;
+        while (usbDevice == null)
         {
-            singleDevice = USBDevice.GetSingleDevice("EA0BD5C3-50F3-4888-84B4-74E50E1649DB");
+            usbDevice = USBDevice.GetSingleDevice("EA0BD5C3-50F3-4888-84B4-74E50E1649DB");
         }
 
-        var winUsbPacketTransport = new WinUsbPacketTransport(singleDevice.Interfaces[2]);
+        var winUsbPacketTransport = new WinUsbPacketTransport(usbDevice.Interfaces[2]);
 #else
-
-        foreach (var device in MonoUsbDevice.MonoUsbDeviceList)
+        UsbContext.SetDebugLevel(LogLevel.Warning | LogLevel.Error);
+#if WAIT_FOR_DEBUGGER
+        while (!Debugger.IsAttached)
         {
-            device.Open();
-            Console.WriteLine($"{device.DevicePath}");
-            Console.WriteLine(device.Info.Descriptor.VendorID);
-            Console.WriteLine($"{JsonSerializer.Serialize(device.Info)}");
-            device.Close();
+            Console.WriteLine("Waiting for debugger");
+            Thread.Sleep(1000);
+        }
+        Debugger.Break();
+#endif
+        foreach (var device in UsbContext.List())
+        {
+            Console.WriteLine($"{device.Info.Usb:d3} {device.Info.VendorId:x4}/{device.Info.ProductId:x4} {device.Info.Manufacturer} {device.Info.Product}");
         }
 
        // using var openUsbDevice = UsbDevice.OpenUsbDevice(new UsbDeviceFinder(new Guid("EA0BD5C3-50F3-4888-84B4-74E50E1649DB")));
-       using var openUsbDevice = MonoUsbDevice.MonoUsbDeviceList.Single(x => x.Info.Descriptor.ProductID == 0x0d32);
+       var usbDevice = UsbContext.Find(new UsbDeviceFinder(0x1209,  0x0d32));
+       
+       usbDevice.Open();
+       if (!usbDevice.ClaimInterface(2))
+       {
+           throw new Exception("Failed to claim interface");
+       }
 
-        var winUsbPacketTransport = new LibUsbPacketTransport((IUsbDevice)openUsbDevice);
+       var winUsbPacketTransport = new LibUsbPacketTransport(
+           usbDevice.OpenEndpointReader(ReadEndpointID.Ep03),
+           usbDevice.OpenEndpointWriter(WriteEndpointID.Ep03));
 
 #endif
         var lowLevel = new LegacyFibreChannel(winUsbPacketTransport);
@@ -352,97 +381,6 @@ static class Program
         var commFactory = new LegacyFibreClientFactory();
         var midLevel = await commFactory.Get(lowLevel);
 
-        return C_.Construct(midLevel);
-    }
-}
-
-class G : IPacketTransport
-{
-    private F<IPacketTransport> innerTransport;
-
-    public G(F<IPacketTransport> innerTransport)
-    {
-        this.innerTransport = innerTransport;
-    }
-
-    public async Task<int> ReceivePacketAsync(byte[] buffer, int offset, int count)
-    {
-        return await innerTransport.Invoke(i => i.ReceivePacketAsync(buffer, offset, count));
-    }
-
-    public async Task SendPacketAsync(byte[] buffer, int offset, int count)
-    {
-        await innerTransport.Invoke(i => i.SendPacketAsync(buffer, offset, count));
-    }
-}
-
-class F<U>
-{
-    private readonly Func<Task<U>> _factory;
-    private U? _root;
-    private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(1);
-
-    public F(Func<Task<U>> factory)
-    {
-        this._factory = factory;
-    }
-    
-    public async Task<T> Invoke<T>(Func<U, Task<T>> func, [CallerArgumentExpression("func")] string expression = "(unknown)")
-    {
-        return await InvokeCore(func, expression);
-    }
-
-    public async Task<T> Invoke<T>(Func<U, T> func, [CallerArgumentExpression("func")] string expression = "(unknown)")
-    {
-        return await InvokeCore(
-            r => Task.FromResult(func(r)),
-            expression);
-    }
-
-
-    public async Task Invoke(Action<U> action, [CallerArgumentExpression("action")] string expression = "(unknown)")
-    {
-        await InvokeCore(
-            r =>
-            {
-                action(r);
-                return Task.FromResult(0);
-            },
-            expression);
-    }
-
-    public async Task Invoke(Func<U, Task> action, [CallerArgumentExpression("action")] string expression = "(unknown)")
-    {
-        await InvokeCore(
-            async r =>
-            {
-                await action(r);
-                return Task.FromResult(0);
-            },
-            expression);
-    }
-    
-    private async Task<T> InvokeCore<T>(Func<U, Task<T>> func, string expression)
-    {
-        var s = Stopwatch.StartNew();
-        while (s.Elapsed < Timeout)
-        {
-            Debug.Print($"Trying {expression} after {s.Elapsed}");
-            await EnsureConnected(s);
-            return await func(_root);
-        }
-
-        throw new TimeoutException($"Ran out of time to invoke {expression} after {s.Elapsed}");
-    }
-
-    private async Task EnsureConnected(Stopwatch stopwatch)
-    {
-        if (_root is not null) return;
-
-        while (stopwatch.Elapsed < Timeout)
-        {
-            _root = await _factory();
-            return;
-        }
+        return new DriveContext(C_.Construct(midLevel), usbDevice);
     }
 }
