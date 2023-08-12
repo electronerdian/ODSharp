@@ -27,7 +27,7 @@ steps:
     command: 'pack'
     packagesToPack: '**/*.csproj;!**/*Win*.csproj;!**/*Tool*.csproj'
     configuration: 'Release'
-    includesymbols: true
+    includesymbols: false
     includesource: true
     versioningScheme: 'byPrereleaseNumber'
     majorVersion: '$(MajorVersion)'
