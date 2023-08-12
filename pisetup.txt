@@ -1,0 +1,3 @@
+curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -r linux-arm -v latest -l ~/vsdbg
+sudo apt install git
+sudo apt install  libusb-1.0-0-dev

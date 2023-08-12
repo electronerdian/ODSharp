@@ -10,10 +10,7 @@ public static class TypedFibreObjectGenerator
 {
     public static ClassDeclarationSyntax Generate(ObjectEndpoint parsedManifest)
     {
-        var classSyntax = MakeClassForObject(parsedManifest);
-
-
-        return classSyntax;
+        return MakeClassForObject(parsedManifest);
     }
 
     private static ClassDeclarationSyntax MakeClassForObject(ObjectEndpoint obj)

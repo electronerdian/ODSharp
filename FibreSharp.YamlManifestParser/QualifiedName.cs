@@ -51,6 +51,7 @@ public sealed class QualifiedName : IEquatable<QualifiedName>
     }
 
     public ImmutableList<string> Segments { get; }
+    public string Leaf => Segments.Count > 0 ? Segments[^1] : throw new InvalidOperationException("Root has no leaf name");
 
     public override string ToString()
     {

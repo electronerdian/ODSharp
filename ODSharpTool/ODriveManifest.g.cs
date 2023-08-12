@@ -1616,7 +1616,7 @@ public partial class C_
                 }
 
                 public FibreSharp.HighLevel.IReadScalarAccessor<System.Single> temperature { get; }
-
+                
                 public C_config config { get; }
 
                 public static C_fet_thermistor Construct(FibreSharp.ILegacyFibreClient _comm)

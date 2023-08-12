@@ -1,10 +1,19 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Windows.Forms;
+using System.Text.Json;
 using FibreSharp;
-using FibreSharp.WinUsb;
-using MadWizard.WinUSBNet;
+using FibreSharp.LibUsb;
+using LibUsbDotNet;
+using LibUsbDotNet.LibUsb;
+using LibUsbDotNet.LudnMonoLibUsb;
+using LibUsbDotNet.Main;
 using ODSharp.Generated;
+
+#if WINDOWS
+using MadWizard.WinUSBNet;
+using FibreSharp.WinUsb;
+#endif
 
 // I had to do a workaround of a bug in the USB descriptors, so this GUID won't be correct for you
 enum Mode
@@ -312,6 +321,7 @@ static class Program
 
     private static async Task<C_> Init()
     {
+#if WINDOWS
         USBDevice? singleDevice = null;
         while (singleDevice == null)
         {
@@ -319,6 +329,23 @@ static class Program
         }
 
         var winUsbPacketTransport = new WinUsbPacketTransport(singleDevice.Interfaces[2]);
+#else
+
+        foreach (var device in MonoUsbDevice.MonoUsbDeviceList)
+        {
+            device.Open();
+            Console.WriteLine($"{device.DevicePath}");
+            Console.WriteLine(device.Info.Descriptor.VendorID);
+            Console.WriteLine($"{JsonSerializer.Serialize(device.Info)}");
+            device.Close();
+        }
+
+       // using var openUsbDevice = UsbDevice.OpenUsbDevice(new UsbDeviceFinder(new Guid("EA0BD5C3-50F3-4888-84B4-74E50E1649DB")));
+       using var openUsbDevice = MonoUsbDevice.MonoUsbDeviceList.Single(x => x.Info.Descriptor.ProductID == 0x0d32);
+
+        var winUsbPacketTransport = new LibUsbPacketTransport((IUsbDevice)openUsbDevice);
+
+#endif
         var lowLevel = new LegacyFibreChannel(winUsbPacketTransport);
         lowLevel.Start();
 
