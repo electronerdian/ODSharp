@@ -23,13 +23,14 @@ steps:
 - task: DotNetCoreCLI@2
   inputs:
     command: 'pack'
+    packagesToPack: '**/*.csproj;!**/*Win*.csproj'
     configuration: 'Release'
     includesymbols: true
     includesource: true
     versioningScheme: 'byPrereleaseNumber'
-    majorVersion: $(MajorVersion)
-    minorVersion: $(MinorVersion)
-    patchVersion: $(PatchVersion)
+    majorVersion: '$(MajorVersion)'
+    minorVersion: '$(MinorVersion)'
+    patchVersion: '$(PatchVersion)'
     verbosityPack: 'Minimal'
 
 - task: DotNetCoreCLI@2
