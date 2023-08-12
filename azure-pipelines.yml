@@ -38,6 +38,6 @@ steps:
 - task: DotNetCoreCLI@2
   inputs:
     command: 'push'
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg;!**/*.symbols.nupkg'
     nuGetFeedType: 'internal'
     publishVstsFeed: '27a99079-832f-4146-965e-ee990d627466/ba90ae64-33d1-43dd-9599-e83d01fbad94'
