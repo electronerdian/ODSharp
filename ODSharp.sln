@@ -21,6 +21,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FibreSharp.LibUsb", "FibreS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ODSharp", "ODSharp\ODSharp.csproj", "{17A8FFA4-82AA-4E6E-B773-811B7B6F7D90}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7153C627-2DC3-4852-B335-FAF76F506399}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		LICENSE = LICENSE
+		nuget.config = nuget.config
+		pisetup.txt = pisetup.txt
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
