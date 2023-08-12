@@ -20,11 +20,12 @@ steps:
     projects: |
       **/*.csproj
       !**/*Win*.csproj
-      !**/*GeneratorTool*.csproj
+      !**/*Tool*.csproj
+
 - task: DotNetCoreCLI@2
   inputs:
     command: 'pack'
-    packagesToPack: '**/*.csproj;!**/*Win*.csproj;!**/*GeneratorTool*.csproj'
+    packagesToPack: '**/*.csproj;!**/*Win*.csproj;!**/*Tool*.csproj'
     configuration: 'Release'
     includesymbols: true
     includesource: true
